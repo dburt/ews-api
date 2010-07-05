@@ -28,6 +28,7 @@ module EWS
     
     def on_create_document(doc)
       register_aliases! doc    
+      set_server_version!
     end
     
     def on_response_document(doc)
@@ -38,6 +39,12 @@ module EWS
     def register_aliases!(doc)
       doc.alias 'tns', 'http://schemas.microsoft.com/exchange/services/2006/messages'
       doc.alias 't', 'http://schemas.microsoft.com/exchange/services/2006/types'
+    end
+
+    def set_server_version!
+      doc.find('Header').add('t:RequestServerVersion') do |rsv|
+        rsv.set_attr('Version','Exchange2007_SP1')
+      end
     end
     
     def apply_namespaces!(doc)

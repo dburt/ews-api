@@ -1,17 +1,32 @@
 module EWS
-  DistinguishedFolders = [:calendar,
-                          :contacts,
-                          :deleteditems,
-                          :drafts,
-                          :inbox,
-                          :journal,
-                          :notes,
-                          :outbox,
-                          :sentitems,
-                          :tasks,
-                          :msgfolderroot,
-                          :root,
-                          :junkemail,
-                          :searchfolders,
-                          :voicemail ].freeze
+
+DistinguishedFolders = %w[
+archivedeleteditems
+archivemsgfolderroot
+archiverecoverableitemsdeletions
+archiverecoverableitemspurges
+archiverecoverableitemsroot
+archiverecoverableitemsversions
+archiveroot
+calendar
+contacts
+deleteditems
+drafts
+inbox
+journal
+junkemail
+msgfolderroot
+notes
+outbox
+publicfoldersroot
+recoverableitemsdeletions
+recoverableitemspurges
+recoverableitemsroot
+recoverableitemsversions
+root
+searchfolders
+sentitems
+tasks
+voicemail
+].map(&:to_sym).freeze
 end
