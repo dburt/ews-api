@@ -6,8 +6,8 @@ Exchange Web Services API.
 
 Set the endpoint
 
-  EWS::Service.endpoint :uri => 'https://example.com/ews/exchange.asmx',
-                        :version => 1         
+  EWS::Service.endpoint 'https://example.com/ews/exchange.asmx',
+                        :request_server_version => 'Exchange2007_SP1'
  
 Set the credentials if the service requires autentication. NTLM is known to work.
 
