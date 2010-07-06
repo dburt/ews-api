@@ -10,11 +10,15 @@ module EWS
   # @see http://msdn.microsoft.com/en-us/library/bb409286.aspx Exchange Web Services Operations
   # @see http://msdn.microsoft.com/en-us/library/aa580545.aspx BaseShape
   class Service < Handsoap::Service
-    def self.endpoint(uri)
+    # @see http://msdn.microsoft.com/en-us/library/bb891876.aspx RequestServerVersion
+    # @example EWS::Service.endpoint 'http://mail.example.com/EWS/Exchange.aspx', :request_server_version => 'Exchange2007_SP1'
+    def self.endpoint(uri, opts = {})
+      @@opts = opts
       super :uri => uri, :version => 1
     end
                  
     @@username, @@password = nil, nil
+    @@opts = {}
           
     def set_auth(username, password)
       @@username, @@password = username, password
@@ -42,8 +46,10 @@ module EWS
     end
 
     def set_server_version!
-      doc.find('Header').add('t:RequestServerVersion') do |rsv|
-        rsv.set_attr('Version','Exchange2007_SP1')
+      if @@opts && @@opts[:request_server_version]
+        doc.find('Header').add('t:RequestServerVersion') do |rsv|
+          rsv.set_attr('Version', @@opts[:request_server_version])
+        end
       end
     end
     
@@ -251,6 +257,8 @@ module EWS
         builder(find_item, opts) do
           traversal!
           item_shape!
+          indexed_page_item_view!
+          query_string!
           folder_id_container! 'tns:ParentFolderIds', folder_ids         
         end
       end

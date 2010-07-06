@@ -83,21 +83,28 @@ module EWS
         nil
       end
     end
-      
+
     def parse_message(message_node)
       attrs = {
         :item_id          => parse_id(message_node.xpath('t:ItemId')),
         :parent_folder_id => parse_id(message_node.xpath('t:ParentFolderId')),
         :subject          => message_node.xpath('t:Subject/text()').to_s,
         :body             => message_node.xpath('t:Body/text()').to_s,
-        :body_type        => message_node.xpath('t:Body/@BodyType').to_s
+        :body_type        => message_node.xpath('t:Body/@BodyType').to_s,
+        :to_recipients => parse_mailboxes(message_node.xpath("t:ToRecipients/t:Mailbox")),
+        :cc_recipients => parse_mailboxes(message_node.xpath("t:CcRecipients/t:Mailbox")),
+        :bcc_recipients => parse_mailboxes(message_node.xpath("t:BccRecipients/t:Mailbox")),
+        :display_to => message_node.xpath("t:DisplayTo/text()").to_s,
+        :display_cc => message_node.xpath("t:DisplayCc/text()").to_s,
+        :from => parse_mailboxes(message_node.xpath("t:From/t:Mailbox")).first
+        #, :node => message_node
       }
 
-      nodeset = message_node.xpath('t:HasAttachments')
-      attrs[:has_attachments] = if not nodeset.empty?
-        parse_bool(nodeset)
+      attrs[:recipients] = %w[to_recipients cc_recipients bcc_recipients
+                              display_to display_cc].inject([]) do |memo, field|
+        memo + attrs[field.to_sym].to_s.split("; ")
       end
-      
+
       nodeset = message_node.xpath('t:Attachments')
       attrs[:attachments] = if not nodeset.empty?
         nodeset.xpath('t:ItemAttachment|t:FileAttachment').map do |node|
@@ -109,8 +116,32 @@ module EWS
       attrs[:header] = if not nodeset.empty?
         parse_header nodeset
       end
+
+      message_node.xpath('*').each do |node|
+        attr_name = node.node_name.gsub(/(.)([A-Z])/, '\1_\2').downcase.to_sym
+        unless attrs[attr_name]
+          attrs[attr_name] = 
+            if node.node_name =~ /^(Has|Is)./
+              parse_bool(node)
+            elsif node.to_s =~ /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/
+              Time.parse(node.to_s)
+            else
+              node.to_s
+            end
+        end
+      end
    
       Message.new attrs
+    end
+
+    def parse_mailboxes mailbox_nodes
+      mailbox_nodes.map do |mailbox|
+        name = "\"#{mailbox.xpath('t:Name/text()').to_s}\""
+        email = "<#{mailbox.xpath('t:EmailAddress/text()').to_s}>"
+        name = nil if name == '""'
+        email = nil if email == '<>'
+        [name, email].compact.join(" ") if name || email
+      end.compact.join("; ")
     end
 
     EXCHANGE_ITEM_XPATH = ['t:Item',
