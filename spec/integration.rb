@@ -1,13 +1,14 @@
-require File.dirname(__FILE__) + '/spec_helper'
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
-config_file = File.dirname(__FILE__) + '/test-config.yml'
+config_file = File.join(File.dirname(__FILE__), '/test-config.yml')
 
 if File.exist?(config_file)
   unless defined? EWS_CONFIG
     EWS_CONFIG = YAML.load_file config_file
   end
   
-  EWS::Service.endpoint EWS_CONFIG['endpoint']
+  EWS::Service.endpoint EWS_CONFIG['endpoint'],
+    :request_server_version => EWS_CONFIG['request_server_version']
   EWS::Service.set_auth EWS_CONFIG['username'], EWS_CONFIG['password']
 else
   unless defined? EWS_CONFIG
@@ -21,24 +22,28 @@ Create 'spec/test-config.yml' to automatically configure
 the endpoint and credentials. The file is ignored via
 .gitignore so it will not be committed.
 
-endpoint:
-  :uri: 'https://localhost/ews/exchange.asmx'
-  :version: 1
+endpoint: 'https://localhost/ews/exchange.asmx'
+request_server_version: Exchange2007_SP1
 username: testuser
 password: xxxxxx
+item_id: AABC
+attachment_id: AACD
+resolve_names: Peter
+dump_soap: false
 
 =================================================================
 
 EOS
 end
 
-EWS::Service.logger = $stdout
+EWS::Service.logger = $stdout if EWS_CONFIG['dump_soap']
 
 describe 'Integration Tests' do
   context "resolve_names" do
     it "should resolve names" do
       lambda do
-        EWS::Service.resolve_names! EWS_CONFIG['resolve_names']
+        resolutions = EWS::Service.resolve_names! EWS_CONFIG['resolve_names']
+        resolutions.should be_instance_of(Array)
       end.should_not raise_error
     end    
   end
@@ -47,6 +52,12 @@ describe 'Integration Tests' do
     it "should find the folder without errors" do
       lambda do
         EWS::Service.find_folder(:inbox)
+      end.should_not raise_error
+    end
+
+    it "should find the public folders root folder without errors" do
+      lambda do
+        EWS::Service.find_folder(:publicfoldersroot)
       end.should_not raise_error
     end
 
@@ -88,7 +99,14 @@ describe 'Integration Tests' do
       items = EWS::Service.find_item :inbox, :base_shape => :AllProperties
       items.should be_instance_of(Array)
     end
-    
+
+    it "should find specific items with a query string and limit" do
+      items = EWS::Service.find_item :inbox, :base_shape => :Default,
+        :offset => 42, :limit => 6,
+        :query_string => {:participants => EWS_CONFIG['resolve_names']}
+      items.should satisfy {|x| x.map(&:class) == [EWS::Message] * 6 }
+    end
+
     it "should raise a ResponseError when the item does not exist" do
       lambda do
         EWS::Service.find_item('does-not-exist')

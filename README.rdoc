@@ -27,11 +27,14 @@ The config file is ignored via +.gitignore+.
 === Example +spec/test-config.yml+
 
   # Example spec/test-config.yml
-  endpoint:
-    :uri: 'https://localhost/ews/exchange.asmx'
-    :version: 1
+  endpoint: 'https://localhost/ews/exchange.asmx'
+  request_server_version: Exchange2007_SP1
   username: testuser
   password: xxxxxx
+  item_id: AABC
+  attachment_id: AACD
+  resolve_names: Peter
+  dump_soap: false
 
 == Copyright
 

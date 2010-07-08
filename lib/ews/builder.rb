@@ -60,12 +60,12 @@ module EWS
     #
     # @example @opts = {:limit => 20, :offset => 0}
     # @see http://msdn.microsoft.com/en-us/library/aa563549.aspx IndexedPageItemView
-    def indexed_page_item_view!
-      if @opts[:offset] || @opts[:limit]
+    def indexed_page_item_view!(opts=@opts)
+      if opts[:offset] || opts[:limit]
         @action_node.add 'tns:IndexedPageItemView' do |view|
-          view.set_attr 'MaxEntriesReturned', @opts[:limit] if @opts[:limit]
+          view.set_attr 'MaxEntriesReturned', opts[:limit] if opts[:limit]
           view.set_attr 'BasePoint', 'Beginning'
-          view.set_attr 'Offset', (@opts[:offset] || 0)
+          view.set_attr 'Offset', (opts[:offset] || 0)
         end
       end
     end
@@ -81,8 +81,7 @@ module EWS
     #   participants
     # @see http://msdn.microsoft.com/en-us/library/ee693615.aspx QueryString
     # @see http://msdn.microsoft.com/en-us/library/aa563791.aspx Restriction
-    def query_string!
-      qs = @opts[:query_string]
+    def query_string!(qs = @opts[:query_string])
       if qs && !qs.empty?
         @action_node.add 'tns:Restriction' do |restriction|
           if qs.size == 1

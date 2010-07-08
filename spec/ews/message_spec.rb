@@ -23,6 +23,28 @@ module EWS
 
       Message.new(:item_id => {:id => id}).move_to!(folder_id)
     end
+
+    it "should have from address" do
+      @message.from.should == '"Mail Delivery System" <DAEMON@example.com>'
+    end
+
+    it "should have recipients" do
+      @message.recipients.should == ['"sansa@example.com" <sansa@example.com>']
+    end
+
+    it "should have other fields from returned data" do
+      {
+        :is_read_receipt_requested => false,
+        :is_read => true,
+        :date_time_sent => DateTime.new(2009, 12, 2, 16, 38, 47),
+        :item_class => "REPORT.IPM.Note.NDR",
+        :sensitivity => "Normal",
+        :size => "5496",
+        :culture => "en-US"
+      }.each do |method, result|
+        @message.send(method).should == result
+      end
+    end
   end
   
 end

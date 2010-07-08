@@ -6,7 +6,7 @@ module EWS
       @parser = Parser.new
     end
 
-    context "#iems" do
+    context "#items" do
       it "should call service#find_item with the folder id" do
         service = mock(:service)
         service.should_receive(:find_item).with('maid of tarth', anything())
@@ -15,7 +15,19 @@ module EWS
         folder.service = service
         
         folder.items
-      end      
+      end
+
+      it "should call find_item with passed options" do
+        service = mock(:service)
+        service.should_receive(:find_item).with('maid of tarth',
+          :base_shape => :AllProperties, :limit => 6, :query_string => {})
+        
+        folder = Folder.new(:folder_id => {:id => 'maid of tarth'})
+        folder.service = service
+        
+        folder.items(:limit => 6, :query_string => {})
+      end
+
     end
     
     context '#folders' do

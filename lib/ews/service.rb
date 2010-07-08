@@ -32,7 +32,7 @@ module EWS
     
     def on_create_document(doc)
       register_aliases! doc    
-      set_server_version!
+      set_server_version! doc
     end
     
     def on_response_document(doc)
@@ -45,7 +45,7 @@ module EWS
       doc.alias 't', 'http://schemas.microsoft.com/exchange/services/2006/types'
     end
 
-    def set_server_version!
+    def set_server_version!(doc)
       if @@opts && @@opts[:request_server_version]
         doc.find('Header').add('t:RequestServerVersion') do |rsv|
           rsv.set_attr('Version', @@opts[:request_server_version])

@@ -121,5 +121,43 @@ EOS
       @doc.to_s.should == expected_parent_folder_ids_with_more
     end
   end
+
+  context '#indexed_page_item_view!' do
+    it "when given a limit" do
+      builder.indexed_page_item_view!(:limit => 6)
+      @doc.to_s.should == '<tns:IndexedPageItemView BasePoint="Beginning" xmlns:tns="http://schemas.microsoft.com/exchange/services/2006/messages" MaxEntriesReturned="6" Offset="0" />'
+    end
+    it "when given an offset" do
+      builder.indexed_page_item_view!(:offset => 42)
+      @doc.to_s.should == '<tns:IndexedPageItemView BasePoint="Beginning" xmlns:tns="http://schemas.microsoft.com/exchange/services/2006/messages" Offset="42" />'
+    end
+    it "when given a limit and offset" do
+      builder.indexed_page_item_view!(:offset => 42, :limit => 6)
+      @doc.to_s.should == '<tns:IndexedPageItemView BasePoint="Beginning" xmlns:tns="http://schemas.microsoft.com/exchange/services/2006/messages" MaxEntriesReturned="6" Offset="42" />'
+    end
+    it "when given no relevant parameters" do
+      builder.indexed_page_item_view!({})
+      proc { @doc.to_s }.should raise_error(StandardError, /document element/)
+    end
+  end
+
+  context '#query_string!' do
+    it "when given a query" do
+      builder.query_string!(:to => 'fred.nerk@example.com')
+      @doc.to_s.should =~ /Restriction.+Contains.+FieldURI FieldURI="message:ToRecipients" \/>.+<t:Constant Value="fred.nerk@example.com"/m
+    end
+    it "when given a query including participants" do
+      builder.query_string!(:participants => 'fred.nerk@example.com')
+      @doc.to_s.should == "<tns:Restriction xmlns:tns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\n  <t:Or xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\n    <t:Contains ContainmentMode=\"Substring\" ContainmentComparison=\"IgnoreCaseAndNonSpacingCharacters\">\n      <t:FieldURI FieldURI=\"message:From\" />\n      <t:Constant Value=\"fred.nerk@example.com\" />\n    </t:Contains>\n    <t:Contains ContainmentMode=\"Substring\" ContainmentComparison=\"IgnoreCaseAndNonSpacingCharacters\">\n      <t:FieldURI FieldURI=\"message:ToRecipients\" />\n      <t:Constant Value=\"fred.nerk@example.com\" />\n    </t:Contains>\n    <t:Contains ContainmentMode=\"Substring\" ContainmentComparison=\"IgnoreCaseAndNonSpacingCharacters\">\n      <t:FieldURI FieldURI=\"message:CcRecipients\" />\n      <t:Constant Value=\"fred.nerk@example.com\" />\n    </t:Contains>\n    <t:Contains ContainmentMode=\"Substring\" ContainmentComparison=\"IgnoreCaseAndNonSpacingCharacters\">\n      <t:FieldURI FieldURI=\"message:BccRecipients\" />\n      <t:Constant Value=\"fred.nerk@example.com\" />\n    </t:Contains>\n  </t:Or>\n</tns:Restriction>"
+    end
+    it "when given nil" do
+      builder.query_string!(nil)
+      proc { @doc.to_s }.should raise_error(StandardError, /document element/)
+    end
+    it "when given an empty hash" do
+      builder.query_string!({})
+      proc { @doc.to_s }.should raise_error(StandardError, /document element/)
+    end
+  end
   
 end
